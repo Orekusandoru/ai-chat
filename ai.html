@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Помічник | Портфоліо</title>
+
+    <!-- Підключення Tailwind CSS для сучасного та швидкого дизайну -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Підключення шрифту Inter для гарної типографіки -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Підключення іконок FontAwesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        min-height: 100%;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        /* Сучасний градієнтний фон */
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        color: #f8fafc;
+        min-height: 100dvh;
+      }
+
+      /* Стиль "Glassmorphism" для контейнерів */
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Кастомний скроллбар для чату */
+      .chat-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .chat-scroll::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .chat-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+      }
+
+      /* Анімація для повідомлень */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .message-anim {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+
+      .message-row {
+        min-width: 0;
+        max-width: 100%;
+      }
+
+      .message-bubble {
+        min-width: 0;
+        max-width: 80%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
+      #chatMessages {
+        min-height: 0;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 0.75rem;
+          height: 100dvh;
+          overflow: hidden;
+        }
+
+        header {
+          margin-bottom: 0.75rem;
+        }
+
+        main {
+          height: auto !important;
+          min-height: 0;
+          max-height: none;
+          flex: 1 1 auto;
+        }
+
+        .message-bubble {
+          max-width: calc(100% - 2.75rem);
+        }
+      }
+
+      /* Анімація завантаження (крапки) */
+      .typing-dot {
+        animation: typing 1.4s infinite ease-in-out both;
+      }
+      .typing-dot:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .typing-dot:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+      @keyframes typing {
+        0%,
+        80%,
+        100% {
+          transform: scale(0);
+        }
+        40% {
+          transform: scale(1);
+        }
+      }
+    </style>
+  </head>
+  <body class="p-4 md:p-8 flex flex-col items-center">
+    <header
+      class="w-full max-w-4xl mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center glass-panel rounded-2xl p-6"
+    >
+      <div>
+        <h1
+          class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2"
+        >
+          <i class="fa-solid fa-robot mr-2"></i>AI Портфоліо
+        </h1>
+        <p class="text-slate-300 text-sm md:text-base max-w-2xl">
+          Цей проект створено для демонстрації навичок інтеграції сучасних LLM
+          (великих мовних моделей) у веб-застосунки. Він використовує API Gemini
+          для створення інтелектуального чат-бота, здатного підтримувати
+          контекстну розмову, допомагати з кодуванням та відповідати на загальні
+          запитання.
+        </p>
+      </div>
+      <div class="mt-4 md:mt-0 flex gap-3">
+        <a
+          href="https://github.com"
+          target="_blank"
+          class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition border border-slate-600 flex items-center gap-2"
+        >
+          <i class="fa-brands fa-github"></i> GitHub
+        </a>
+      </div>
+    </header>
+
+    <main
+      class="w-full max-w-4xl flex-grow flex flex-col glass-panel rounded-2xl overflow-hidden"
+      style="height: min(70vh, 720px)"
+    >
+      <!-- Заголовок чату -->
+      <div
+        class="bg-white/5 border-b border-white/10 p-4 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <div
+              class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold shadow-lg"
+            >
+              AI
+            </div>
+            <div
+              class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#1e1b4b]"
+            ></div>
+          </div>
+          <div>
+            <h2 class="font-semibold text-lg">Персональний Асистент</h2>
+            <p class="text-xs text-green-400">Онлайн</p>
+          </div>
+        </div>
+        <button
+          id="clearChatBtn"
+          class="text-slate-400 hover:text-white transition"
+          title="Очистити історію"
+        >
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+
+      <!-- Контейнер для повідомлень -->
+      <div
+        id="chatMessages"
+        class="flex-grow p-4 md:p-6 overflow-y-auto chat-scroll flex flex-col gap-4"
+      >
+        <!-- Вітальне повідомлення -->
+        <div class="flex gap-4 message-row message-anim">
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-sm font-bold shadow-lg mt-1"
+          >
+            AI
+          </div>
+          <div
+            class="message-bubble bg-slate-800/80 border border-slate-700 rounded-2xl rounded-tl-none px-4 py-3 text-sm md:text-base leading-relaxed text-slate-200"
+          >
+            Привіт! 👋 Я ваш інтелектуальний помічник, інтегрований у це
+            портфоліо. Я можу розповісти про технології, які тут використані,
+            або просто поспілкуватися з вами. Чим можу допомогти?
+          </div>
+        </div>
+      </div>
+
+      <!-- Поле вводу повідомлення -->
+      <div class="p-4 border-t border-white/10 bg-black/20">
+        <form id="chatForm" class="flex gap-2 relative">
+          <textarea
+            id="userInput"
+            rows="1"
+            class="w-full bg-slate-800/50 border border-slate-600 rounded-xl px-4 py-3 pr-12 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition resize-none text-slate-100 placeholder-slate-400"
+            placeholder="Напишіть своє повідомлення тут..."
+            required
+          ></textarea>
+          <button
+            type="submit"
+            id="sendBtn"
+            class="absolute right-2 bottom-2 w-10 h-10 rounded-lg bg-blue-600 hover:bg-blue-500 flex items-center justify-center text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+        <div class="text-center mt-2">
+          <p class="text-[10px] text-slate-500">
+            AI може помилятися. Перевіряйте важливу інформацію.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Отримуємо посилання на елементи DOM
+        const chatForm = document.getElementById("chatForm");
+        const userInput = document.getElementById("userInput");
+        const chatMessages = document.getElementById("chatMessages");
+        const sendBtn = document.getElementById("sendBtn");
+        const clearChatBtn = document.getElementById("clearChatBtn");
+
+        // Історія чату для підтримки контексту розмови
+        let chatHistory = [];
+
+        // Базовий системний промпт (інструкція для AI), що визначає його поведінку
+        const systemPrompt =
+          "Ти - професійний, ввічливий та розумний AI-асистент, інтегрований на сайт-портфоліо українського розробника. Твоя мета - демонструвати можливості штучного інтелекту, допомагати відвідувачам, відповідати на запитання про веб-розробку, програмування або вести загальну приємну бесіду. Відповідай українською мовою. Будь лаконічним, але інформативним. Форматуй код, якщо потрібно, і використовуй смайлики для дружелюбності.";
+
+        // Автоматична зміна висоти textarea при введенні тексту
+        userInput.addEventListener("input", function () {
+          this.style.height = "auto";
+          this.style.height =
+            (this.scrollHeight < 120 ? this.scrollHeight : 120) + "px";
+        });
+
+        // Обробка натискання Enter (без Shift) для відправки повідомлення
+        userInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (this.value.trim() !== "")
+              chatForm.dispatchEvent(new Event("submit"));
+          }
+        });
+
+        // Очищення чату
+        clearChatBtn.addEventListener("click", () => {
+          // Залишаємо тільки вітальне повідомлення
+          while (chatMessages.children.length > 1) {
+            chatMessages.removeChild(chatMessages.lastChild);
+          }
+          chatHistory = []; // Очищуємо історію для API
+        });
+
+        // Функція для додавання повідомлення в інтерфейс
+        function appendMessage(role, text) {
+          const msgDiv = document.createElement("div");
+          msgDiv.className = `flex gap-4 message-row message-anim ${role === "user" ? "flex-row-reverse" : ""}`;
+
+          // Форматування тексту (базова підтримка Markdown для жирного тексту та коду)
+          let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(
+              /`(.*?)`/g,
+              '<code class="bg-slate-800 px-1 py-0.5 rounded text-blue-300 font-mono text-sm">$1</code>',
+            )
+            .replace(/\n/g, "<br>");
+
+          const avatar =
+            role === "user"
+              ? `<div class="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center text-sm shadow-lg mt-1"><i class="fa-solid fa-user"></i></div>`
+              : `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-sm font-bold shadow-lg mt-1">AI</div>`;
+
+          const bubbleStyle =
+            role === "user"
+              ? `bg-blue-600 text-white rounded-tr-none`
+              : `bg-slate-800/80 border border-slate-700 text-slate-200 rounded-tl-none`;
+
+          msgDiv.innerHTML = `
+                    ${avatar}
+                    <div class="message-bubble rounded-2xl px-4 py-3 text-sm md:text-base leading-relaxed ${bubbleStyle}">
+                        ${formattedText}
+                    </div>
+                `;
+
+          chatMessages.appendChild(msgDiv);
+          scrollToBottom();
+        }
+
+        // Функція відображення індикатора завантаження ("AI друкує...")
+        function showLoading() {
+          const loadingDiv = document.createElement("div");
+          loadingDiv.id = "loadingIndicator";
+          loadingDiv.className = "flex gap-4 message-row message-anim";
+          loadingDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0 flex items-center justify-center text-sm font-bold shadow-lg mt-1">AI</div>
+                    <div class="message-bubble bg-slate-800/80 border border-slate-700 rounded-2xl rounded-tl-none px-4 py-4 flex items-center gap-1">
+                        <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                        <div class="w-2 h-2 bg-slate-400 rounded-full typing-dot"></div>
+                    </div>
+                `;
+          chatMessages.appendChild(loadingDiv);
+          scrollToBottom();
+        }
+
+        function hideLoading() {
+          const loadingDiv = document.getElementById("loadingIndicator");
+          if (loadingDiv) {
+            loadingDiv.remove();
+          }
+        }
+
+        function scrollToBottom() {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Основна функція для спілкування з Gemini API
+        async function generateAIResponse(userText) {
+          // Додаємо повідомлення користувача до історії
+          chatHistory.push({ role: "user", parts: [{ text: userText }] });
+
+          // Формуємо payload згідно вимог Gemini API
+          const payload = {
+            contents: chatHistory,
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
+            },
+          };
+
+          // Canvas автоматично підставить API ключ, якщо залишити змінну пустою
+
+          try {
+            // 1. Відправляємо запит на НАШ власний сервер (Vercel), а не на Google
+            const response = await fetch("/api/chat", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ message: userInput }),
+            });
+
+            // 2. Отримуємо відповідь у змінну data
+            const data = await response.json();
+
+            // 3. Перевіряємо data (а не result) на наявність тексту
+            if (
+              data.candidates &&
+              data.candidates[0] &&
+              data.candidates[0].content
+            ) {
+              // 4. Отримуємо текст лише один раз
+              const aiText = data.candidates[0].content.parts[0].text;
+
+              // Зберігаємо відповідь моделі в історію чату
+              chatHistory.push({ role: "model", parts: [{ text: aiText }] });
+
+              return aiText;
+            } else {
+              throw new Error("Некоректний формат відповіді від API");
+            }
+          } catch (error) {
+            console.error("Помилка:", error);
+            chatHistory.pop();
+            return "Вибачте, виникла помилка при з'єднанні з сервером. Спробуйте ще раз пізніше.";
+          }
+        }
+
+        // Обробник відправки повідомлення
+        chatForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const text = userInput.value.trim();
+          if (!text) return;
+
+          // Блокуємо інпут під час очікування
+          userInput.value = "";
+          userInput.style.height = "auto"; // Скидаємо висоту
+          userInput.disabled = true;
+          sendBtn.disabled = true;
+
+          // Відображаємо повідомлення користувача
+          appendMessage("user", text);
+
+          // Показуємо анімацію друкування
+          showLoading();
+
+          // Отримуємо відповідь від AI
+          const aiResponseText = await generateAIResponse(text);
+
+          // Приховуємо анімацію і показуємо відповідь
+          hideLoading();
+          appendMessage("model", aiResponseText);
+
+          // Розблоковуємо інпут
+          userInput.disabled = false;
+          sendBtn.disabled = false;
+          userInput.focus();
+        });
+      });
+    </script>
+  </body>
+</html>
